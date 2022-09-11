@@ -116,7 +116,7 @@ public class Robot extends TimedRobot {
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
     if (stick.getRawButton(5) && input.get()){
-      liftyright.set(ControlMode.PercentOutput,.4); 
+      liftyright.set(ControlMode.PercentOutput,-.4); 
     } else if (stick.getRawButton(6)&& input.get()){
       
       liftyright.set(ControlMode.PercentOutput,.3); 
