@@ -117,7 +117,7 @@ public class Robot extends TimedRobot {
     if (stick.getRawButton(5) && input.get()) {
       liftyright.set(ControlMode.PercentOutput, -.4); 
     } else if (stick.getRawButton(6)&& input.get()) {
-      liftyright.set(ControlMode.PercentOutput, .3); 
+      liftyright.set(ControlMode.PercentOutput, -.3); 
     } 
     else {
       liftyright.set(ControlMode.PercentOutput, 0);
