@@ -109,39 +109,32 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    drivetrain.arcadeDrive(stick.getZ(),stick.getY());
+    drivetrain.arcadeDrive(stick.getZ(), stick.getY());
   
-{
-  liftyleft.follow(liftyright);
+    liftyleft.follow(liftyright);
+    liftyright.setInverted(false);
+    liftyleft.setInverted(InvertType.OpposeMaster);
+    if (stick.getRawButton(5) && input.get()) {
+      liftyright.set(ControlMode.PercentOutput, -.4); 
+    } else if (stick.getRawButton(6)&& input.get()) {
+      liftyright.set(ControlMode.PercentOutput, .3); 
+    } 
+    else {
+      liftyright.set(ControlMode.PercentOutput, 0);
+    }
+
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
     if (stick.getRawButton(5) && input.get()){
       liftyright.set(ControlMode.PercentOutput,-.4); 
-    } else if (stick.getRawButton(6)&& input.get()){
-      
+    }
+    else if (stick.getRawButton(6)&& input.get()) {
       liftyright.set(ControlMode.PercentOutput,.3); 
-    } else {
-      liftyright.set(ControlMode.PercentOutput, 0) ;}
-
     }
-    
-
-    {
-      liftyright.setInverted(false);
-      liftyleft.setInverted(InvertType.OpposeMaster);
-      if (stick.getRawButton(5) && input.get()){
-        liftyright.set(ControlMode.PercentOutput,-.4); 
-      } else if (stick.getRawButton(6)&& input.get()){
-        
-        liftyright.set(ControlMode.PercentOutput,.3); 
-      } else {
-        liftyright.set(ControlMode.PercentOutput, 0) ;}
-
-
-
-
+    else {
+      liftyright.set(ControlMode.PercentOutput, 0);
     }
-}
+  }
   /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {}
