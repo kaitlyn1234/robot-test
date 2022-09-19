@@ -8,12 +8,10 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.XboxController;
-
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
-import edu.wpi.first.wpilibj.Timer;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.InvertType;
@@ -49,12 +47,10 @@ public class Robot extends TimedRobot {
   private final MotorControllerGroup right_Motor_Group = new MotorControllerGroup(right_motor_front, right_motor_back);
   private final MotorControllerGroup left_Motor_Group = new MotorControllerGroup(left_motor_front, left_motor_back);
   DifferentialDrive drivetrain = new DifferentialDrive(right_Motor_Group, left_Motor_Group);
+  Joystick stick = new Joystick(0);
+  
 
-
-  XboxController xbox = new XboxController(0);
-
-  Timer timer = new Timer();
-  /*
+  /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
@@ -63,7 +59,6 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
-    left_Motor_Group.setInverted(true);
   }
 
   /**
@@ -91,8 +86,6 @@ public class Robot extends TimedRobot {
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
-    timer.reset();
-    timer.start();
   }
 
   /** This function is called periodically during autonomous. */
@@ -100,23 +93,11 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {
     switch (m_autoSelected) {
       case kCustomAuto:
-        drivetrain.feedWatchdog();
         // Put custom auto code here
-        if (timer.hasElapsed(1.0)) {
-          // don't run
-          left_Motor_Group.set(0.0);
-          right_Motor_Group.set(0.0);
-        }
-        else {
-          // run
-          left_Motor_Group.set(0.3);
-          right_Motor_Group.set(0.3);
-        }
-
         break;
       case kDefaultAuto:
       default:
-        // Put default auto code here()
+        // Put default auto code here
         break;
     }
   }
@@ -128,15 +109,14 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-   // drivetrain.arcadeDrive(xbox.getLeftY(), xbox.getLeftX());
-    drivetrain.tankDrive(xbox.getLeftY(), xbox.getRightY());
-    
+    drivetrain.arcadeDrive(stick.getZ(), stick.getY());
+  
     liftyleft.follow(liftyright);
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
-    if (xbox.getXButton()) {
+    if (stick.getRawButton(5) && input.get()) {
       liftyright.set(ControlMode.PercentOutput, -.4); 
-    } else if (xbox.getBButton()) {
+    } else if (stick.getRawButton(6)&& input.get()) {
       liftyright.set(ControlMode.PercentOutput, .3); 
     } 
     else {
@@ -145,10 +125,10 @@ public class Robot extends TimedRobot {
 
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
-    if (xbox.getXButton()){
+    if (stick.getRawButton(5) && input.get()){
       liftyright.set(ControlMode.PercentOutput,-.4); 
     }
-    else if (xbox.getBButton()) {
+    else if (stick.getRawButton(6)&& input.get()) {
       liftyright.set(ControlMode.PercentOutput,.3); 
     }
     else {
