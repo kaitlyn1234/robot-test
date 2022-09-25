@@ -14,12 +14,18 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.math.controller.*;
 
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.InvertType;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -31,8 +37,8 @@ public class Robot extends TimedRobot {
   private static final String kCustomAuto = "My Auto";
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
-  WPI_TalonSRX liftyleft= new WPI_TalonSRX(5);
-  WPI_TalonSRX liftyright= new WPI_TalonSRX(6);
+  WPI_TalonSRX liftyleft = new WPI_TalonSRX(5);
+  WPI_TalonSRX liftyright = new WPI_TalonSRX(6);
 
 
 
@@ -54,6 +60,10 @@ public class Robot extends TimedRobot {
   XboxController xbox = new XboxController(0);
 
   Timer timer = new Timer();
+  
+  CANSparkMax sparkmax_motor = new CANSparkMax(7, MotorType.kBrushless);;
+  PIDController pid = new PIDController(0.08, 0.4, 0.0);
+
   /*
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -64,6 +74,11 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
     left_Motor_Group.setInverted(true);
+    liftyleft.setNeutralMode(NeutralMode.Brake);
+    liftyright.setNeutralMode(NeutralMode.Brake);
+
+    // Prevent integral windup
+    pid.setIntegratorRange(-1.0, 1.0);
   }
 
   /**
@@ -129,8 +144,31 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
    // drivetrain.arcadeDrive(xbox.getLeftY(), xbox.getLeftX());
-    drivetrain.tankDrive(xbox.getLeftY(), xbox.getRightY());
+    drivetrain.tankDrive(xbox.getRightY(), xbox.getLeftY());
+    double right_trigger = xbox.getRightTriggerAxis();
+    double left_trigger = xbox.getLeftTriggerAxis();
+    double set_velocity;
+
+    if (right_trigger > 0.05) {
+      set_velocity = right_trigger;
+    }
+    else if (left_trigger > 0.05) {
+      set_velocity = -left_trigger;
+    }
+    else {
+      set_velocity = 0;
+    }
+
+    double rots_per_sec = sparkmax_motor.getEncoder().getVelocity() / 1200;
+    SmartDashboard.putNumber("encoder value:", sparkmax_motor.getEncoder().getPosition());
+    SmartDashboard.putNumber("encoder velocity:", rots_per_sec);
+
+    SmartDashboard.putNumber("velocity set point:", set_velocity * 5);
+
+    double controller_result = pid.calculate(rots_per_sec, set_velocity * 5);
+    sparkmax_motor.set(controller_result);
     
+
     liftyleft.follow(liftyright);
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
