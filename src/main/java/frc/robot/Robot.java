@@ -173,7 +173,7 @@ public class Robot extends TimedRobot {
     liftyright.setInverted(false);
     liftyleft.setInverted(InvertType.OpposeMaster);
     if (xbox.getXButton()) {
-      liftyright.set(ControlMode.PercentOutput, -.4); 
+      liftyright.set(ControlMode.PercentOutput, -.6); 
     } else if (xbox.getBButton()) {
       liftyright.set(ControlMode.PercentOutput, .3); 
     } 
@@ -182,9 +182,9 @@ public class Robot extends TimedRobot {
     }
 
     liftyright.setInverted(false);
-    liftyleft.setInverted(InvertType.OpposeMaster);
+    liftyleft.setInverted(InvertType.OpposeMaster); 
     if (xbox.getXButton()){
-      liftyright.set(ControlMode.PercentOutput,-.4); 
+      liftyright.set(ControlMode.PercentOutput,-.6);
     }
     else if (xbox.getBButton()) {
       liftyright.set(ControlMode.PercentOutput,.3); 
