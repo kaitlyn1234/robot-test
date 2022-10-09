@@ -9,12 +9,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Joystick;
 
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.motorcontrol.VictorSP;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.math.controller.*;
+
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -40,6 +40,7 @@ public class Robot extends TimedRobot {
   WPI_TalonSRX liftyleft = new WPI_TalonSRX(5);
   WPI_TalonSRX liftyright = new WPI_TalonSRX(6);
 
+  WPI_TalonSRX shooterlift = new WPI_TalonSRX(8);
 
 
 
@@ -47,6 +48,10 @@ public class Robot extends TimedRobot {
   WPI_VictorSPX left_motor_front = new WPI_VictorSPX(2);
   WPI_VictorSPX left_motor_back = new WPI_VictorSPX(1);
   WPI_VictorSPX right_motor_front = new WPI_VictorSPX(3);
+
+  WPI_VictorSPX shooter = new WPI_VictorSPX(9);
+  WPI_VictorSPX belt = new WPI_VictorSPX(10);
+
   DigitalInput input = new DigitalInput(1);
   
 
@@ -54,15 +59,16 @@ public class Robot extends TimedRobot {
 
   private final MotorControllerGroup right_Motor_Group = new MotorControllerGroup(right_motor_front, right_motor_back);
   private final MotorControllerGroup left_Motor_Group = new MotorControllerGroup(left_motor_front, left_motor_back);
-  DifferentialDrive drivetrain = new DifferentialDrive(right_Motor_Group, left_Motor_Group);
+  DifferentialDrive drivetrain = new DifferentialDrive(left_Motor_Group, right_Motor_Group);
 
 
-  XboxController xbox = new XboxController(0);
+  XboxController xbox = new XboxController(1);
+  Joystick joystick = new Joystick(0);
 
   Timer timer = new Timer();
   
-  CANSparkMax sparkmax_motor = new CANSparkMax(7, MotorType.kBrushless);;
-  PIDController pid = new PIDController(0.08, 0.4, 0.0);
+  CANSparkMax intake = new CANSparkMax(7, MotorType.kBrushless);;
+  
 
   /*
    * This function is run when the robot is first started up and should be used for any
@@ -78,7 +84,7 @@ public class Robot extends TimedRobot {
     liftyright.setNeutralMode(NeutralMode.Brake);
 
     // Prevent integral windup
-    pid.setIntegratorRange(-1.0, 1.0);
+
   }
 
   /**
@@ -113,26 +119,26 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        drivetrain.feedWatchdog();
-        // Put custom auto code here
-        if (timer.hasElapsed(1.0)) {
-          // don't run
-          left_Motor_Group.set(0.0);
-          right_Motor_Group.set(0.0);
-        }
-        else {
-          // run
-          left_Motor_Group.set(0.3);
-          right_Motor_Group.set(0.3);
-        }
+    // switch (m_autoSelected) {
+    //   case kCustomAuto:
+    //     break;
+    //   case kDefaultAuto:
+    //   default:
+    //     // Put default auto code here()
+    //     break;
+    // }
 
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here()
-        break;
+    drivetrain.feedWatchdog();
+    // Put custom auto code here
+    if (timer.hasElapsed(1.0)) {
+      // don't run
+      left_Motor_Group.set(0.0);
+      right_Motor_Group.set(0.0);
+    }
+    else {
+      // run
+      left_Motor_Group.set(0.3);
+      right_Motor_Group.set(0.3);
     }
   }
 
@@ -140,58 +146,93 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {}
 
+  public double evaluatePolynomial(double x) {
+      double a = 0.0;
+      double b = 1;
+      double c = 0.0;
+
+      return a*x + b*java.lang.Math.pow(x, 2) + c*java.lang.Math.pow(x, 3);
+  }
+
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
    // drivetrain.arcadeDrive(xbox.getLeftY(), xbox.getLeftX());
-    drivetrain.tankDrive(xbox.getRightY(), xbox.getLeftY());
-    double right_trigger = xbox.getRightTriggerAxis();
-    double left_trigger = xbox.getLeftTriggerAxis();
-    double set_velocity;
+    double left_cmd = xbox.getLeftY();
+    double right_cmd = xbox.getRightY();
 
-    if (right_trigger > 0.05) {
-      set_velocity = right_trigger;
+    if (java.lang.Math.abs(left_cmd) < 0.05) {
+      left_cmd = 0.0;
     }
-    else if (left_trigger > 0.05) {
-      set_velocity = -left_trigger;
+
+    if(java.lang.Math.abs(right_cmd) < 0.05) {
+      right_cmd = 0.0;
+    }
+
+    double left_cmd_scaled = evaluatePolynomial(java.lang.Math.abs(left_cmd));
+    double right_cmd_scaled = evaluatePolynomial(java.lang.Math.abs(right_cmd));
+
+    left_cmd_scaled = java.lang.Math.copySign(left_cmd_scaled, left_cmd);
+    right_cmd_scaled = java.lang.Math.copySign(right_cmd_scaled, right_cmd);
+
+    drivetrain.tankDrive(left_cmd_scaled, right_cmd_scaled);
+   
+
+
+    if (joystick.getRawButton(5)){
+      intake.set(.2);
+    
+    } else{
+      intake.set(0);
+    }
+
+    if (joystick.getRawButton(9)) {
+      shooter.set(1);
     }
     else {
-      set_velocity = 0;
+      shooter.set(0);
+    }
+   
+    if (joystick.getRawButton(6)){
+      belt.set(.2);
+    }
+    else {
+      belt.set(0);
+    }   
+
+    if (joystick.getRawButton(11)){
+      shooterlift.set(.2);
+    }
+    else{
+      shooterlift.set(0);
     }
 
-    double rots_per_sec = sparkmax_motor.getEncoder().getVelocity() / 1200;
-    SmartDashboard.putNumber("encoder value:", sparkmax_motor.getEncoder().getPosition());
-    SmartDashboard.putNumber("encoder velocity:", rots_per_sec);
 
-    SmartDashboard.putNumber("velocity set point:", set_velocity * 5);
-
-    double controller_result = pid.calculate(rots_per_sec, set_velocity * 5);
-    sparkmax_motor.set(controller_result);
+  
+    liftyleft.setInverted(false);
     
-
-    liftyleft.follow(liftyright);
-    liftyright.setInverted(false);
-    liftyleft.setInverted(InvertType.OpposeMaster);
-    if (xbox.getXButton()) {
-      liftyright.set(ControlMode.PercentOutput, -.6); 
-    } else if (xbox.getBButton()) {
-      liftyright.set(ControlMode.PercentOutput, .3); 
+    if (xbox.getAButton()) {
+      liftyleft.set(ControlMode.PercentOutput, 1);    
+     } 
+    else if (xbox.getXButton()) {
+      liftyleft.set(ControlMode.PercentOutput, -.5); 
     } 
     else {
-      liftyright.set(ControlMode.PercentOutput, 0);
+      liftyleft.set(ControlMode.PercentOutput, 0);
     }
 
     liftyright.setInverted(false);
-    liftyleft.setInverted(InvertType.OpposeMaster); 
-    if (xbox.getXButton()){
-      liftyright.set(ControlMode.PercentOutput,-.6);
+
+    if (xbox.getYButton()){
+      liftyright.set(ControlMode.PercentOutput,.5);
     }
     else if (xbox.getBButton()) {
-      liftyright.set(ControlMode.PercentOutput,.3); 
+      liftyright.set(ControlMode.PercentOutput,-1); 
     }
     else {
       liftyright.set(ControlMode.PercentOutput, 0);
     }
+    
   }
   /** This function is called once when the robot is disabled. */
   @Override
