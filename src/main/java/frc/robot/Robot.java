@@ -180,7 +180,7 @@ public class Robot extends TimedRobot {
 
 
     if (joystick.getRawButton(5)){
-      intake.set(.2);
+      intake.set(-1);
     
     } else{
       intake.set(0);
@@ -193,7 +193,7 @@ public class Robot extends TimedRobot {
       shooter.set(0);
     }
    
-    if (joystick.getRawButton(6)){
+    if (joystick.getRawButton(7)){
       belt.set(.2);
     }
     else {
