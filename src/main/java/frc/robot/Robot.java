@@ -82,6 +82,7 @@ public class Robot extends TimedRobot {
     left_Motor_Group.setInverted(true);
     liftyleft.setNeutralMode(NeutralMode.Brake);
     liftyright.setNeutralMode(NeutralMode.Brake);
+    shooterlift.setNeutralMode(NeutralMode.Brake);
 
     // Prevent integral windup
 
@@ -180,28 +181,50 @@ public class Robot extends TimedRobot {
 
 
     if (joystick.getRawButton(5)){
-      intake.set(-1);
+      intake.set(-.8);
     
     } else{
       intake.set(0);
     }
 
-    if (joystick.getRawButton(9)) {
-      shooter.set(1);
+
+
+    if (joystick.getRawButton(6)) {
+      shooter.set(.3);
+      //shooter goes in (intake)
+    }
+    else if (joystick.getRawButton(1)) {
+      shooter.set(-.7);
+      //shooter goes out (shoots into hub)
     }
     else {
       shooter.set(0);
     }
    
-    if (joystick.getRawButton(7)){
-      belt.set(.2);
+
+
+    if (joystick.getRawButton(9)){
+      belt.set(.5);
+      //belt goes out
+    }
+    else if (joystick.getRawButton(10)){
+      belt.set(-.5);
+      //belt goes in
     }
     else {
       belt.set(0);
     }   
 
+
+
     if (joystick.getRawButton(11)){
-      shooterlift.set(.2);
+      shooterlift.set(.15);
+      //lift goes down
+    }
+    else if (joystick.getRawButton(12)){
+      shooterlift.set(-.35);
+      //lift goes up
+    
     }
     else{
       shooterlift.set(0);
@@ -212,7 +235,7 @@ public class Robot extends TimedRobot {
     liftyleft.setInverted(false);
     
     if (xbox.getAButton()) {
-      liftyleft.set(ControlMode.PercentOutput, 1);    
+      liftyleft.set(ControlMode.PercentOutput, .6);    
      } 
     else if (xbox.getXButton()) {
       liftyleft.set(ControlMode.PercentOutput, -.5); 
@@ -227,7 +250,7 @@ public class Robot extends TimedRobot {
       liftyright.set(ControlMode.PercentOutput,.5);
     }
     else if (xbox.getBButton()) {
-      liftyright.set(ControlMode.PercentOutput,-1); 
+      liftyright.set(ControlMode.PercentOutput,-.6); 
     }
     else {
       liftyright.set(ControlMode.PercentOutput, 0);
