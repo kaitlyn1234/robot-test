@@ -124,15 +124,6 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    // switch (m_autoSelected) {
-    //   case kCustomAuto:
-    //     break;
-    //   case kDefaultAuto:
-    //   default:
-    //     // Put default auto code here()
-    //     break;
-    // }
-
     drivetrain.feedWatchdog();
     // Put custom auto code here
 
