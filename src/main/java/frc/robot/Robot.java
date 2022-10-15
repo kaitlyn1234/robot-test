@@ -69,6 +69,10 @@ public class Robot extends TimedRobot {
   
   CANSparkMax intake = new CANSparkMax(7, MotorType.kBrushless);;
   
+  enum RobotState { INTAKE, SHOOT };
+  RobotState state = RobotState.SHOOT;
+
+  Timer shooter_timer = new Timer();
 
   /*
    * This function is run when the robot is first started up and should be used for any
@@ -131,21 +135,45 @@ public class Robot extends TimedRobot {
 
     drivetrain.feedWatchdog();
     // Put custom auto code here
-    if (timer.hasElapsed(1.0)) {
+
+    if (timer.hasElapsed(9.0)) {
+      shooterlift.set(0);
+    }
+    else if (timer.hasElapsed(7.0)) {
+      shooterlift.set(0.15);
+      state = RobotState.INTAKE;
+      shooter_timer.reset();
+      shooter_timer.start();
+    }
+    else if (timer.hasElapsed(4.0)) {
       // don't run
       left_Motor_Group.set(0.0);
       right_Motor_Group.set(0.0);
     }
-    else {
+    else if (timer.hasElapsed(2.0)) {
       // run
       left_Motor_Group.set(0.3);
       right_Motor_Group.set(0.3);
+      shooter.set(0);
+      belt.set(0);
+    }
+    else {
+      shooter.set(-1);
+      belt.set(0.5);
+      shooterlift.set(-0.05);
     }
   }
 
+
+
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    if (!shooter_timer.hasElapsed(2.0)) {
+      shooter_timer.reset();
+      shooter_timer.start();
+    }
+  }
 
   public double evaluatePolynomial(double x) {
       double a = 0.0;
@@ -177,60 +205,6 @@ public class Robot extends TimedRobot {
     right_cmd_scaled = java.lang.Math.copySign(right_cmd_scaled, right_cmd);
 
     drivetrain.tankDrive(left_cmd_scaled, right_cmd_scaled);
-   
-
-
-    if (joystick.getRawButton(5)){
-      intake.set(-.8);
-    
-    } else{
-      intake.set(0);
-    }
-
-
-
-    if (joystick.getRawButton(6)) {
-      shooter.set(.3);
-      //shooter goes in (intake)
-    }
-    else if (joystick.getRawButton(1)) {
-      shooter.set(-.7);
-      //shooter goes out (shoots into hub)
-    }
-    else {
-      shooter.set(0);
-    }
-   
-
-
-    if (joystick.getRawButton(9)){
-      belt.set(.5);
-      //belt goes out
-    }
-    else if (joystick.getRawButton(10)){
-      belt.set(-.5);
-      //belt goes in
-    }
-    else {
-      belt.set(0);
-    }   
-
-
-
-    if (joystick.getRawButton(11)){
-      shooterlift.set(.15);
-      //lift goes down
-    }
-    else if (joystick.getRawButton(12)){
-      shooterlift.set(-.35);
-      //lift goes up
-    
-    }
-    else{
-      shooterlift.set(0);
-    }
-
-
   
     liftyleft.setInverted(false);
     
@@ -256,6 +230,63 @@ public class Robot extends TimedRobot {
       liftyright.set(ControlMode.PercentOutput, 0);
     }
     
+    if (joystick.getRawButton(11) && state == RobotState.SHOOT) {
+      // Transtion to intake mode
+      state = RobotState.INTAKE;
+      shooter_timer.reset();
+      shooter_timer.start();
+    }
+    else if  (joystick.getRawButton(12) && state == RobotState.INTAKE) {
+      // Transtion to shoot mode
+      state = RobotState.SHOOT;
+      shooter_timer.reset();
+      shooter_timer.start();
+    }
+
+    if (state == RobotState.INTAKE) {
+      if (shooter_timer.hasElapsed(2)) {
+        shooterlift.set(0.00);
+      }
+      else {
+        shooterlift.set(0.15);
+      }
+
+      if (joystick.getRawButton(1)) {
+        intake.set(-0.5);
+        shooter.set(0.5);
+        belt.set(-0.3);
+      }
+      else {
+        intake.set(0);
+        shooter.set(0);
+        belt.set(0);
+      }
+    }
+    else if (state == RobotState.SHOOT) {
+      if (shooter_timer.hasElapsed(4)) {
+        shooterlift.set(-0.05);
+      }
+      else {
+        shooterlift.set(-0.35);
+      }
+      
+      if (joystick.getRawButton(1)) {
+        shooter.set(-1);
+      }
+      else {
+        shooter.set(0);
+      }
+
+      if (joystick.getRawButton(5)){
+        belt.set(0.5);
+      }
+      else if (joystick.getRawButton(3)) {
+        belt.set(-0.3);
+      }
+      else {
+        belt.set(0);
+      }
+    }
   }
   /** This function is called once when the robot is disabled. */
   @Override
